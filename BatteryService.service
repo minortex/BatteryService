@@ -1,0 +1,13 @@
+[Unit]
+Description=check battery level and control charger
+Wants=multi-user.target
+After=multi-user.target
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/BatteryService
+User=root
+
+[Install]
+WantedBy=multi-user.target
+
