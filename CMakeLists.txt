@@ -27,3 +27,9 @@ target_link_libraries(BatteryService
 )
 
 install(TARGETS BatteryService DESTINATION bin)
+
+# install systemd units
+
+set(SYSTEMD_UNIT_DIR "/usr/lib/systemd/system")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/BatteryService.service"
+  DESTINATION "${SYSTEMD_UNIT_DIR}")
