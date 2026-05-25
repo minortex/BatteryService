@@ -42,16 +42,16 @@ void UPowerBatteryInterface::onPropertiesChanged(const QString& interfaceName,
     }
 
     if (changedProperties.contains("State")) {
-        // State 1 means charging. Repeated State signals are common while charge is inhibited.
+        // State 1 means charging. Other states are equivalent for this service.
         uint state = changedProperties["State"].toUInt();
-        if (m_hasLastBatteryState && state == m_lastBatteryState) {
+        bool isCharging = (state == 1);
+        if (m_hasLastBatteryChargingState && isCharging == m_lastBatteryChargingState) {
             return;
         }
 
-        m_hasLastBatteryState = true;
-        m_lastBatteryState = state;
+        m_hasLastBatteryChargingState = true;
+        m_lastBatteryChargingState = isCharging;
 
-        bool isCharging = (state == 1);
         qInfo() << "Battery charging state changed:" << isCharging << "(state:" << state << ")";
         emit batteryChargingChanged(isCharging);
     }

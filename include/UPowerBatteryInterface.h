@@ -22,8 +22,8 @@ class UPowerBatteryInterface : public QObject {
 
   private:
     QDBusInterface* m_interface{nullptr};
-    bool m_hasLastBatteryState{false};
-    uint m_lastBatteryState{0};
+    bool m_hasLastBatteryChargingState{false};
+    bool m_lastBatteryChargingState{false};
 };
 
 #endif // DBUSINTERFACE_H
