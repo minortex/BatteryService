@@ -26,7 +26,6 @@ int main(int argc, char* argv[]) {
     
         auto updateLogic = [&](double currentLevel) {
             if (currentLevel == lastLevel) {
-                qInfo() << "Battery level " << currentLevel << "% is unchanged. No action taken.";
                 return;
             }
     
