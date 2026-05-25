@@ -1,6 +1,6 @@
 # Maintainer: Your Name <youremail@example.com>
 pkgname=battery-service-git
-pkgver=r6.8228b02 # 这是一个占位符，makepkg 运行后会自动更新它
+pkgver=r14.53e6ddc # 这是一个占位符，makepkg 运行后会自动更新它
 pkgrel=1
 pkgdesc="Battery monitoring service (Git version)"
 arch=('x86_64')
@@ -26,6 +26,11 @@ build() {
   cmake --preset linux-gcc-ninja-release \
     -DCMAKE_INSTALL_PREFIX=/usr
   cmake --build --preset linux-gcc-ninja-release-build
+}
+
+check() {
+  cd "${srcdir}/${pkgname}/build/linux-gcc-ninja-release"
+  ctest --output-on-failure
 }
 
 package() {

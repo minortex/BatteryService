@@ -1,3 +1,7 @@
 .cache/
 build/
 temp/
+pkg/
+battery-service-git/
+/src/battery-service-git/
+*.pkg.tar*
