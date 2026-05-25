@@ -13,6 +13,7 @@ set(SOURCES
   src/WriteSysfs.cpp)
 
 set(HEADERS
+  include/ChargePolicy.h
   include/UPowerBatteryInterface.h
   include/WriteSysfs.h)
 
@@ -26,6 +27,17 @@ target_include_directories(BatteryService PRIVATE
 target_link_libraries(BatteryService
     PRIVATE Qt6::DBus
 )
+
+enable_testing()
+
+add_executable(ChargePolicyTest
+  tests/ChargePolicyTest.cpp
+  include/ChargePolicy.h)
+
+target_include_directories(ChargePolicyTest PRIVATE
+"${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+add_test(NAME ChargePolicyTest COMMAND ChargePolicyTest)
 
 install(TARGETS BatteryService DESTINATION bin)
 
