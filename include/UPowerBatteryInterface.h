@@ -10,18 +10,20 @@ class UPowerBatteryInterface : public QObject {
   public:
     explicit UPowerBatteryInterface(QObject* parent = nullptr);
     double getBatteryLevel();
+    bool isBatteryCharging();
 
   signals:
     void batteryLevelChanged(double level);
-    void chargerStatusChanged(bool isOnline);
-  public slots:
-    bool isChargerOnline();
+    void batteryChargingChanged(bool isCharging);
+
   private slots:
     void onPropertiesChanged(const QString& interfaceName, const QVariantMap& changedProperties,
                              const QStringList& invalidatedProperties);
 
   private:
-    QDBusInterface* m_interface;
+    QDBusInterface* m_interface{nullptr};
+    bool m_hasLastBatteryState{false};
+    uint m_lastBatteryState{0};
 };
 
 #endif // DBUSINTERFACE_H

@@ -42,15 +42,23 @@ void UPowerBatteryInterface::onPropertiesChanged(const QString& interfaceName,
     }
 
     if (changedProperties.contains("State")) {
-        // State 1 typically means charging, 2 means discharging
-        bool isOnline = (changedProperties["State"].toUInt() == 1);
-        qInfo() << "Charger status changed (based on State):" << isOnline;
-        emit chargerStatusChanged(isOnline);
+        // State 1 means charging. Repeated State signals are common while charge is inhibited.
+        uint state = changedProperties["State"].toUInt();
+        if (m_hasLastBatteryState && state == m_lastBatteryState) {
+            return;
+        }
+
+        m_hasLastBatteryState = true;
+        m_lastBatteryState = state;
+
+        bool isCharging = (state == 1);
+        qInfo() << "Battery charging state changed:" << isCharging << "(state:" << state << ")";
+        emit batteryChargingChanged(isCharging);
     }
 }
 
 double UPowerBatteryInterface::getBatteryLevel() {
-    if (!m_interface->isValid()) {
+    if (!m_interface || !m_interface->isValid()) {
         return -1;
     }
 
@@ -68,8 +76,8 @@ double UPowerBatteryInterface::getBatteryLevel() {
     return -1;
 }
 
-bool UPowerBatteryInterface::isChargerOnline() {
-    if (!m_interface->isValid()) {
+bool UPowerBatteryInterface::isBatteryCharging() {
+    if (!m_interface || !m_interface->isValid()) {
         return false;
     }
 
@@ -79,11 +87,11 @@ bool UPowerBatteryInterface::isChargerOnline() {
         QVariant firstArg = reply.arguments().at(0);
         if (firstArg.canConvert<QDBusVariant>()) {
             QDBusVariant dbusVariant = firstArg.value<QDBusVariant>();
-            // State 1 typically means charging, 2 means discharging
+            // State 1 means charging.
             return dbusVariant.variant().toUInt() == 1;
         }
     }
 
-    qWarning() << "Failed to get charger status (State):" << reply.errorMessage();
+    qWarning() << "Failed to get battery charging state:" << reply.errorMessage();
     return false;
 }

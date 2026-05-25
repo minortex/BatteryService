@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
             qInfo() << "Checking state for battery level: " << currentLevel << "%";
             lastLevel = currentLevel;
     
-            bool shouldInhibit = batteryMonitor.isChargerOnline() && (currentLevel >= threshHold);
+            bool shouldInhibit = batteryMonitor.isBatteryCharging() && (currentLevel >= threshHold);
             controlChargeBehavior(shouldInhibit);
         };
     
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
             &batteryMonitor, &UPowerBatteryInterface::batteryLevelChanged, updateLogic);
     
         QObject::connect(
-            &batteryMonitor, &UPowerBatteryInterface::chargerStatusChanged, [&](bool) {
+            &batteryMonitor, &UPowerBatteryInterface::batteryChargingChanged, [&](bool) {
                 updateLogic(batteryMonitor.getBatteryLevel());
             });
     
