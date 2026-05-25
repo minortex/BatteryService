@@ -1,12 +1,12 @@
 # Maintainer: Your Name <youremail@example.com>
 pkgname=battery-service-git
-pkgver=r14.53e6ddc # 这是一个占位符，makepkg 运行后会自动更新它
+pkgver=r16.c9e7de3 # 这是一个占位符，makepkg 运行后会自动更新它
 pkgrel=1
 pkgdesc="Battery monitoring service (Git version)"
 arch=('x86_64')
 url="https://github.com/minortex/BatteryService"
 license=('GPL')
-depends=('qt6-base' 'upower')
+depends=('gcc-libs' 'glibc' 'qt6-base' 'upower')
 makedepends=('git' 'cmake' 'ninja')
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")

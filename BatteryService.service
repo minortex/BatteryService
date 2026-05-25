@@ -1,7 +1,7 @@
 [Unit]
 Description=check battery level and control charger
-Wants=multi-user.target
-After=multi-user.target
+Requires=upower.service
+After=upower.service
 
 [Service]
 Type=exec
@@ -10,4 +10,3 @@ User=root
 
 [Install]
 WantedBy=multi-user.target
-
