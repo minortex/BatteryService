@@ -25,8 +25,8 @@ Run the same daemon in the foreground for debugging.
 Evaluate the policy once and apply the resulting charge behavior.
 .TP
 .B status
-Print battery level, charging state, kernel charge behavior, and systemd service
-status.
+Print a concise battery and daemon status summary. This command does not show
+the full systemd status or recent journal output.
 .TP
 .B auto
 Set charge behavior to
@@ -37,7 +37,7 @@ Set charge behavior to
 .BR inhibit-charge .
 .TP
 .B service status
-Show the systemd service status.
+Show the full systemd service status.
 .TP
 .B service restart
 Restart the systemd service.

@@ -13,10 +13,10 @@ battery drops to 75% or below, then writes `auto`.
 batteryctl daemon          # run the policy daemon
 batteryctl monitor         # run the daemon in the foreground
 batteryctl once            # apply the policy once
-batteryctl status          # show battery and service status
+batteryctl status          # show concise battery and daemon status
 batteryctl auto            # set charge_behaviour to auto
 batteryctl inhibit         # set charge_behaviour to inhibit-charge
-batteryctl service status  # show BatteryService.service status
+batteryctl service status  # show full BatteryService.service status
 batteryctl service restart # restart BatteryService.service
 batteryctl help            # show help
 ```

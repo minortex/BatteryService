@@ -8,6 +8,12 @@ class ChargePolicy {
         InhibitCharge,
     };
 
+    ChargePolicy() = default;
+
+    explicit ChargePolicy(Behavior initialBehavior) {
+        setCurrentBehavior(initialBehavior);
+    }
+
     Behavior evaluate(double batteryLevel, bool isBatteryCharging) {
         if (isBatteryCharging && batteryLevel >= inhibitThreshold) {
             m_shouldInhibitCharging = true;
@@ -20,6 +26,10 @@ class ChargePolicy {
 
     Behavior currentBehavior() const {
         return m_shouldInhibitCharging ? Behavior::InhibitCharge : Behavior::Auto;
+    }
+
+    void setCurrentBehavior(Behavior behavior) {
+        m_shouldInhibitCharging = (behavior == Behavior::InhibitCharge);
     }
 
     static const char* toSysfsValue(Behavior behavior) {

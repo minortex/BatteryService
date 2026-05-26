@@ -81,6 +81,22 @@ void startupStateDependsOnBatteryChargingState() {
     }
 }
 
+void initialBehaviorRestoresHysteresisState() {
+    {
+        ChargePolicy policy{ChargePolicy::Behavior::InhibitCharge};
+        expectBehavior("initial inhibit keeps 79 inhibited", policy.evaluate(79.0, false),
+                       ChargePolicy::Behavior::InhibitCharge);
+        expectBehavior("initial inhibit resumes at 75", policy.evaluate(75.0, false),
+                       ChargePolicy::Behavior::Auto);
+    }
+
+    {
+        ChargePolicy policy{ChargePolicy::Behavior::Auto};
+        expectBehavior("initial auto keeps 79 auto", policy.evaluate(79.0, false),
+                       ChargePolicy::Behavior::Auto);
+    }
+}
+
 void sysfsValuesMatchKernelInterface() {
     expectString("auto sysfs value", ChargePolicy::toSysfsValue(ChargePolicy::Behavior::Auto),
                  "auto");
@@ -96,6 +112,7 @@ int main() {
     chargingAbove80KeepsInhibited();
     inhibitedStateUsesResumeThreshold();
     startupStateDependsOnBatteryChargingState();
+    initialBehaviorRestoresHysteresisState();
     sysfsValuesMatchKernelInterface();
 
     if (failures != 0) {

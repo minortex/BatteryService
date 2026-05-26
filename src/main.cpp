@@ -24,10 +24,10 @@ void printUsage() {
         << "  daemon           Run the battery policy daemon (default)\n"
         << "  monitor          Run the daemon in the foreground\n"
         << "  once             Evaluate and apply the policy once\n"
-        << "  status           Show battery, charge behavior, and service status\n"
+        << "  status           Show concise battery and daemon status\n"
         << "  auto             Set charge behavior to auto\n"
         << "  inhibit          Set charge behavior to inhibit-charge\n"
-        << "  service status   Show the systemd service status\n"
+        << "  service status   Show the full systemd service status\n"
         << "  service restart  Restart the systemd service\n"
         << "  service start    Start the systemd service\n"
         << "  service stop     Stop the systemd service\n"
@@ -57,6 +57,26 @@ std::string readFile(const char* path) {
     return content;
 }
 
+std::string activeChargeBehavior(const std::string& chargeBehavior) {
+    const std::size_t start = chargeBehavior.find('[');
+    const std::size_t end = chargeBehavior.find(']', start);
+    if (start == std::string::npos || end == std::string::npos || end <= start + 1) {
+        return chargeBehavior;
+    }
+
+    return chargeBehavior.substr(start + 1, end - start - 1);
+}
+
+ChargePolicy::Behavior behaviorFromSysfsValue(const std::string& value) {
+    return value == ChargePolicy::toSysfsValue(ChargePolicy::Behavior::InhibitCharge)
+               ? ChargePolicy::Behavior::InhibitCharge
+               : ChargePolicy::Behavior::Auto;
+}
+
+ChargePolicy currentChargePolicy() {
+    return ChargePolicy{behaviorFromSysfsValue(activeChargeBehavior(readFile(behaviorPath)))};
+}
+
 int setChargeBehavior(const std::string& behavior) {
     ChargeBehaviorHandler chargeHandler{behaviorPath};
     return chargeHandler.writeChargeBehavior(behavior) ? 0 : 1;
@@ -64,7 +84,7 @@ int setChargeBehavior(const std::string& behavior) {
 
 int applyPolicyOnce() {
     UPowerBatteryInterface batteryMonitor;
-    ChargePolicy chargePolicy;
+    ChargePolicy chargePolicy = currentChargePolicy();
     const double level = batteryMonitor.getBatteryLevel();
     const bool isCharging = batteryMonitor.isBatteryCharging();
     const ChargePolicy::Behavior behavior = chargePolicy.evaluate(level, isCharging);
@@ -78,14 +98,18 @@ int applyPolicyOnce() {
 
 int printStatus() {
     UPowerBatteryInterface batteryMonitor;
+    const int serviceActive = runSystemctl({"is-active", "--quiet", serviceName});
+    const std::string kernelStatus = readFile("/sys/class/power_supply/BAT0/status");
+    const std::string chargeBehavior = readFile(behaviorPath);
 
-    std::cout << "Battery level: " << batteryMonitor.getBatteryLevel() << "%\n";
-    std::cout << "Battery charging: " << (batteryMonitor.isBatteryCharging() ? "yes" : "no")
+    std::cout << "Service:       " << (serviceActive == 0 ? "active" : "inactive") << "\n";
+    std::cout << "Battery:       " << batteryMonitor.getBatteryLevel() << "%, " << kernelStatus
               << "\n";
-    std::cout << "Kernel status: " << readFile("/sys/class/power_supply/BAT0/status") << "\n";
-    std::cout << "Charge behavior: " << readFile(behaviorPath) << "\n";
-    std::cout << "\n" << std::flush;
-    return runSystemctl({"status", "--no-pager", serviceName});
+    std::cout << "Charging:      " << (batteryMonitor.isBatteryCharging() ? "yes" : "no")
+              << "\n";
+    std::cout << "Behavior:      " << activeChargeBehavior(chargeBehavior) << "\n";
+    std::cout << "Kernel values: " << chargeBehavior << "\n";
+    return 0;
 }
 
 int runDaemon(QCoreApplication& app) {
@@ -93,20 +117,17 @@ int runDaemon(QCoreApplication& app) {
 
     UPowerBatteryInterface batteryMonitor;
     ChargeBehaviorHandler chargeHandler{behaviorPath};
-    ChargePolicy chargePolicy;
-    std::string lastChargeBehavior;
+    ChargePolicy chargePolicy = currentChargePolicy();
 
-    auto controlChargeBehavior{[&chargeHandler, &lastChargeBehavior](
-                                   ChargePolicy::Behavior behavior) {
+    auto controlChargeBehavior{[&chargeHandler](ChargePolicy::Behavior behavior) {
         const std::string targetBehavior = ChargePolicy::toSysfsValue(behavior);
-        if (targetBehavior == lastChargeBehavior) {
+        const std::string currentBehavior = activeChargeBehavior(readFile(behaviorPath));
+        if (targetBehavior == currentBehavior) {
             return;
         }
 
         qInfo() << "Setting charge behavior to" << targetBehavior.c_str();
-        if (chargeHandler.writeChargeBehavior(targetBehavior)) {
-            lastChargeBehavior = targetBehavior;
-        }
+        chargeHandler.writeChargeBehavior(targetBehavior);
     }};
 
     auto updateLogic = [&](double currentLevel, bool force) {
