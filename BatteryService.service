@@ -5,7 +5,7 @@ After=upower.service
 
 [Service]
 Type=exec
-ExecStart=/usr/bin/BatteryService
+ExecStart=/usr/bin/batteryctl daemon
 User=root
 
 [Install]

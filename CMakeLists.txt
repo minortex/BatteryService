@@ -1,6 +1,6 @@
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 cmake_minimum_required(VERSION 3.16)
-project(BatteryService)
+project(batteryctl)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
@@ -17,14 +17,14 @@ set(HEADERS
   include/UPowerBatteryInterface.h
   include/WriteSysfs.h)
 
-qt_add_executable(BatteryService
+qt_add_executable(batteryctl
 ${SOURCES} ${HEADERS}
 )
 
-target_include_directories(BatteryService PRIVATE
+target_include_directories(batteryctl PRIVATE
 "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-target_link_libraries(BatteryService
+target_link_libraries(batteryctl
     PRIVATE Qt6::DBus
 )
 
@@ -39,10 +39,17 @@ target_include_directories(ChargePolicyTest PRIVATE
 
 add_test(NAME ChargePolicyTest COMMAND ChargePolicyTest)
 
-install(TARGETS BatteryService DESTINATION bin)
+add_test(NAME batteryctlHelp COMMAND batteryctl help)
+set_tests_properties(batteryctlHelp PROPERTIES
+  PASS_REGULAR_EXPRESSION "Usage: batteryctl")
+
+install(TARGETS batteryctl DESTINATION bin)
 
 # install systemd units
 
 set(SYSTEMD_UNIT_DIR "/usr/lib/systemd/system")
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/BatteryService.service"
   DESTINATION "${SYSTEMD_UNIT_DIR}")
+
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/docs/batteryctl.1"
+  DESTINATION share/man/man1)

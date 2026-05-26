@@ -1,0 +1,70 @@
+.TH BATTERYCTL 1 "2026-05-26" "batteryctl" "User Commands"
+.SH NAME
+batteryctl \- control and monitor battery charge behavior
+.SH SYNOPSIS
+.B batteryctl
+[\fICOMMAND\fR]
+.SH DESCRIPTION
+.B batteryctl
+monitors BAT0 through UPower and writes
+.I /sys/class/power_supply/BAT0/charge_behaviour
+to keep charging behavior within the configured policy.
+.PP
+The daemon inhibits charging at 80 percent while BAT0 is charging, then keeps
+that mode until the battery drops to 75 percent or below.
+.SH COMMANDS
+.TP
+.B daemon
+Run the battery policy daemon. This is the default command and is used by the
+systemd service.
+.TP
+.B monitor
+Run the same daemon in the foreground for debugging.
+.TP
+.B once
+Evaluate the policy once and apply the resulting charge behavior.
+.TP
+.B status
+Print battery level, charging state, kernel charge behavior, and systemd service
+status.
+.TP
+.B auto
+Set charge behavior to
+.BR auto .
+.TP
+.B inhibit
+Set charge behavior to
+.BR inhibit-charge .
+.TP
+.B service status
+Show the systemd service status.
+.TP
+.B service restart
+Restart the systemd service.
+.TP
+.B service start
+Start the systemd service.
+.TP
+.B service stop
+Stop the systemd service.
+.TP
+.B help
+Show command help.
+.SH SERVICE
+The packaged systemd unit is
+.BR BatteryService.service .
+It runs:
+.PP
+.EX
+/usr/bin/batteryctl daemon
+.EE
+.SH FILES
+.TP
+.I /sys/class/power_supply/BAT0/charge_behaviour
+Kernel charge behavior control file.
+.TP
+.I /usr/lib/systemd/system/BatteryService.service
+Systemd service unit.
+.SH SEE ALSO
+.BR systemctl (1),
+.BR upower (1)
