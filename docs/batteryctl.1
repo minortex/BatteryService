@@ -29,12 +29,10 @@ Print a concise battery and daemon status summary. This command does not show
 the full systemd status or recent journal output.
 .TP
 .B auto
-Set charge behavior to
-.BR auto .
+Set charge behavior to auto for the current charge session.
 .TP
 .B inhibit
-Set charge behavior to
-.BR inhibit-charge .
+Set charge behavior to inhibit-charge for the current charge session.
 .TP
 .B service status
 Show the full systemd service status.
@@ -58,6 +56,15 @@ It runs:
 .EX
 /usr/bin/batteryctl daemon
 .EE
+.PP
+.B auto
+and
+.B inhibit
+are manual override commands for the current charge session. They are only
+accepted while external power is online. The daemon remains running, but pauses
+automatic policy while the override file exists. After the current charge
+session ends, the daemon clears the override and resumes automatic policy on
+the next charge session.
 .SH FILES
 .TP
 .I /sys/class/power_supply/BAT0/charge_behaviour

@@ -14,14 +14,20 @@ batteryctl daemon          # run the policy daemon
 batteryctl monitor         # run the daemon in the foreground
 batteryctl once            # apply the policy once
 batteryctl status          # show concise battery and daemon status
-batteryctl auto            # set charge_behaviour to auto
-batteryctl inhibit         # set charge_behaviour to inhibit-charge
+batteryctl auto            # set auto for the current charge session
+batteryctl inhibit         # set inhibit-charge for the current charge session
 batteryctl service status  # show full BatteryService.service status
 batteryctl service restart # restart BatteryService.service
 batteryctl help            # show help
 ```
 
 Running `batteryctl` without arguments is the same as `batteryctl daemon`.
+
+`auto` and `inhibit` are manual override commands for the current charge
+session. They are only accepted while external power is online. The daemon
+remains running, but pauses automatic policy while the override file exists.
+After the current charge session ends, the daemon clears the override and
+resumes automatic policy on the next charge session.
 
 ## Service
 
