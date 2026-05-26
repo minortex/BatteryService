@@ -170,7 +170,10 @@ int printStatus() {
     std::cout << "Behavior:      " << activeChargeBehavior(chargeBehavior) << "\n";
     std::cout << "Kernel values: " << chargeBehavior << "\n";
     if (!manualOverride.empty()) {
-        std::cout << "Manual:        " << manualOverride << " for current charge session\n";
+        const char* sessionLabel =
+            isChargeSessionActive(batteryCharging, externalPowerOnline) ? "current" : "last";
+        std::cout << "Manual:        " << manualOverride << " for " << sessionLabel
+                  << " charge session\n";
     }
     return 0;
 }
