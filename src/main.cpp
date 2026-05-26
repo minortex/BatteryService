@@ -92,27 +92,8 @@ ChargePolicy currentChargePolicy() {
     return ChargePolicy{behaviorFromSysfsValue(activeChargeBehavior(readFile(behaviorPath)))};
 }
 
-bool isExternalPowerOnline() {
-    const std::filesystem::path powerSupplyPath{"/sys/class/power_supply"};
-    if (!std::filesystem::exists(powerSupplyPath)) {
-        return false;
-    }
-
-    for (const auto& entry : std::filesystem::directory_iterator(powerSupplyPath)) {
-        if (readFile((entry.path() / "type").c_str()) == "Battery") {
-            continue;
-        }
-
-        if (readFile((entry.path() / "online").c_str()) == "1") {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool isChargeSessionActive(bool isBatteryCharging) {
-    return isBatteryCharging || isExternalPowerOnline();
+bool isChargeSessionActive(bool isBatteryCharging, bool isExternalPowerOnline) {
+    return isBatteryCharging || isExternalPowerOnline;
 }
 
 std::string manualOverrideBehavior() {
@@ -136,7 +117,8 @@ int setChargeBehavior(const std::string& behavior) {
 
 int setManualChargeBehavior(const std::string& behavior) {
     UPowerBatteryInterface batteryMonitor;
-    if (!isChargeSessionActive(batteryMonitor.isBatteryCharging())) {
+    if (!isChargeSessionActive(batteryMonitor.isBatteryCharging(),
+                               batteryMonitor.isExternalPowerOnline())) {
         qWarning() << "Manual charge behavior is only meaningful during an active charge session";
         return 2;
     }
@@ -177,7 +159,7 @@ int printStatus() {
     const std::string chargeBehavior = readFile(behaviorPath);
     const std::string manualOverride = manualOverrideBehavior();
     const bool batteryCharging = batteryMonitor.isBatteryCharging();
-    const bool externalPowerOnline = isExternalPowerOnline();
+    const bool externalPowerOnline = batteryMonitor.isExternalPowerOnline();
 
     std::cout << "Service:       " << (serviceActive == 0 ? "active" : "inactive") << "\n";
     std::cout << "Battery:       " << batteryMonitor.getBatteryLevel() << "%, " << kernelStatus
@@ -221,8 +203,9 @@ int runDaemon(QCoreApplication& app) {
         lastLevel = currentLevel;
 
         const bool isCharging = batteryMonitor.isBatteryCharging();
+        const bool externalPowerOnline = batteryMonitor.isExternalPowerOnline();
         if (!manualOverrideBehavior().empty()) {
-            if (isChargeSessionActive(isCharging)) {
+            if (isChargeSessionActive(isCharging, externalPowerOnline)) {
                 if (!manualOverrideLogged) {
                     qInfo() << "Manual override active; automatic policy paused";
                     manualOverrideLogged = true;
@@ -230,9 +213,11 @@ int runDaemon(QCoreApplication& app) {
                 return;
             }
 
-            clearManualOverride();
-            manualOverrideLogged = false;
-            qInfo() << "Manual override ended; automatic policy resumed";
+            if (!manualOverrideLogged) {
+                qInfo() << "Manual override pending until the next charge session";
+                manualOverrideLogged = true;
+            }
+            return;
         }
 
         controlChargeBehavior(chargePolicy.evaluate(currentLevel, isCharging));
@@ -243,6 +228,16 @@ int runDaemon(QCoreApplication& app) {
 
     QObject::connect(&batteryMonitor, &UPowerBatteryInterface::batteryChargingChanged,
                      [&](bool) { updateLogic(batteryMonitor.getBatteryLevel(), true); });
+
+    QObject::connect(&batteryMonitor, &UPowerBatteryInterface::externalPowerOnlineChanged,
+                     [&](bool isOnline) {
+        if (isOnline && !manualOverrideBehavior().empty()) {
+            clearManualOverride();
+            manualOverrideLogged = false;
+            qInfo() << "Manual override cleared for new charge session";
+            updateLogic(batteryMonitor.getBatteryLevel(), true);
+        }
+    });
 
     qInfo() << "Performing initial state check...";
     updateLogic(batteryMonitor.getBatteryLevel(), true);
